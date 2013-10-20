@@ -25,22 +25,26 @@
  * wrapper for server side events (http://en.wikipedia.org/wiki/Server-sent_events)
  * includes a fallback for older browsers and IE
  *
- * use server side events with causion, to many open requests can hang the server
+ * use server side events with caution, to many open requests can hang the server
  */
 class OC_EventSource{
 	private $fallback;
 	private $fallBackId=0;
-	
-	public function __construct(){
-		@ob_end_clean();
+
+	public function __construct() {
+		OC_Util::obEnd();
 		header('Cache-Control: no-cache');
 		$this->fallback=isset($_GET['fallback']) and $_GET['fallback']=='true';
-		if($this->fallback){
-			$fallBackId=$_GET['fallback_id'];
+		if($this->fallback) {
+			$this->fallBackId=$_GET['fallback_id'];
 			header("Content-Type: text/html");
-			echo str_repeat('<span></span>'.PHP_EOL,10); //dummy data to keep IE happy
+			echo str_repeat('<span></span>'.PHP_EOL, 10); //dummy data to keep IE happy
 		}else{
 			header("Content-Type: text/event-stream");
+		}
+		if( !OC_Util::isCallRegistered()) {
+			$this->send('error', 'Possible CSRF attack. Connection will be closed.');
+			exit();
 		}
 		flush();
 
@@ -48,21 +52,22 @@ class OC_EventSource{
 
 	/**
 	 * send a message to the client
-	 * @param string type
-	 * @param object data
+	 * @param string $type
+	 * @param object $data
 	 *
-	 * if only one paramater is given, a typeless message will be send with that paramater as data
+	 * if only one parameter is given, a typeless message will be send with that parameter as data
 	 */
-	public function send($type,$data=null){
-		if(is_null($data)){
+	public function send($type, $data=null) {
+		if(is_null($data)) {
 			$data=$type;
 			$type=null;
 		}
-		if($this->fallback){
-			$response='<script type="text/javascript">window.parent.OC.EventSource.fallBackCallBack('.$this->fallBackId.',"'.$type.'",'.json_encode($data).')</script>'.PHP_EOL;
+		if($this->fallback) {
+			$response='<script type="text/javascript">window.parent.OC.EventSource.fallBackCallBack('
+				.$this->fallBackId.',"'.$type.'",'.json_encode($data).')</script>'.PHP_EOL;
 			echo $response;
 		}else{
-			if($type){
+			if($type) {
 				echo 'event: '.$type.PHP_EOL;
 			}
 			echo 'data: '.json_encode($data).PHP_EOL;
@@ -74,7 +79,7 @@ class OC_EventSource{
 	/**
 	 * close the connection of the even source
 	 */
-	public function close(){
-		$this->send('__internal__','close');//server side closing can be an issue, let the client do it
+	public function close() {
+		$this->send('__internal__', 'close');//server side closing can be an issue, let the client do it
 	}
 }

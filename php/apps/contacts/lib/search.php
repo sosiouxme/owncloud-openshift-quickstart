@@ -1,28 +1,28 @@
 <?php
-class OC_Search_Provider_Contacts extends OC_Search_Provider{
-	function search($query){
-		$addressbooks = OC_Contacts_Addressbook::all(OCP\USER::getUser(), 1);
-// 		if(count($calendars)==0 || !OCP\App::isEnabled('contacts')){
-// 			//return false;
-// 		}
-		// NOTE: Does the following do anything
-		$results=array();
-		$searchquery=array();
-		if(substr_count($query, ' ') > 0){
-			$searchquery = explode(' ', $query);
-		}else{
-			$searchquery[] = $query;
-		}
-		$l = new OC_l10n('contacts');
-		foreach($addressbooks as $addressbook){
-			$vcards = OC_Contacts_VCard::all($addressbook['id']);
-			foreach($vcards as $vcard){
-				if(substr_count(strtolower($vcard['fullname']), strtolower($query)) > 0){
-					$link = OCP\Util::linkTo('contacts', 'index.php').'?id='.urlencode($vcard['id']);
-					$results[]=new OC_Search_Result($vcard['fullname'],'', $link,$l->t('Contact'));//$name,$text,$link,$type
+
+namespace OCA\Contacts;
+
+class SearchProvider extends \OC_Search_Provider{
+	function search($query) {
+		$unescape = function($value) {
+			return strtr($value, array('\,' => ',', '\;' => ';'));
+		};
+
+		$searchresults = array(	);
+		$results = \OCP\Contacts::search($query, array('N', 'FN', 'EMAIL', 'NICKNAME', 'ORG'));
+		$l = new \OC_l10n('contacts');
+		foreach($results as $result) {
+			$vcard = VCard::find($result['id']);
+			$link = \OCP\Util::linkTo('contacts', 'index.php').'#' . $vcard['id'];
+			$props = array();
+			foreach(array('EMAIL', 'NICKNAME', 'ORG') as $searchvar) {
+				if(isset($result[$searchvar]) && count($result[$searchvar]) > 0 && strlen($result[$searchvar][0]) > 3) {
+					$props = array_merge($props, $result[$searchvar]);
 				}
 			}
+			$props = array_map($unescape, $props);
+			$searchresults[]=new \OC_Search_Result($vcard['fullname'], implode(', ', $props), $link, (string)$l->t('Contact'));//$name,$text,$link,$type
 		}
-		return $results;
+		return $searchresults;
 	}
 }

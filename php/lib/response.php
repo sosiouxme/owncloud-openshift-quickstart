@@ -7,7 +7,7 @@
  */
 
 class OC_Response {
-	const STATUS_FOUND = 304;
+	const STATUS_FOUND = 302;
 	const STATUS_NOT_MODIFIED = 304;
 	const STATUS_TEMPORARY_REDIRECT = 307;
 	const STATUS_NOT_FOUND = 404;
@@ -111,12 +111,13 @@ class OC_Response {
 		if (empty($etag)) {
 			return;
 		}
+		$etag = '"'.$etag.'"';
 		if (isset($_SERVER['HTTP_IF_NONE_MATCH']) &&
 		    trim($_SERVER['HTTP_IF_NONE_MATCH']) == $etag) {
 			self::setStatus(self::STATUS_NOT_MODIFIED);
 			exit;
 		}
-		header('ETag: "'.$etag.'"');
+		header('ETag: '.$etag);
 	}
 
 	/**

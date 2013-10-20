@@ -6,84 +6,81 @@
  * See the COPYING-README file.
  */
 
+namespace OC\Files\Storage;
 
-abstract class OC_FileStorage_StreamWrapper extends OC_Filestorage_Common{
+abstract class StreamWrapper extends Common{
 	abstract public function constructUrl($path);
 
-	public function mkdir($path){
+	public function mkdir($path) {
 		return mkdir($this->constructUrl($path));
 	}
 
-	public function rmdir($path){
-		if($this->file_exists($path)){
-			$succes=rmdir($this->constructUrl($path));
+	public function rmdir($path) {
+		if($this->file_exists($path)) {
+			$success = rmdir($this->constructUrl($path));
 			clearstatcache();
-			return $succes;
-		}else{
+			return $success;
+		} else {
 			return false;
 		}
 	}
 
-	public function opendir($path){
+	public function opendir($path) {
 		return opendir($this->constructUrl($path));
 	}
 
-	public function filetype($path){
+	public function filetype($path) {
 		return filetype($this->constructUrl($path));
 	}
 
-	public function is_readable($path){
+	public function isReadable($path) {
 		return true;//not properly supported
 	}
 
-	public function is_writable($path){
+	public function isUpdatable($path) {
 		return true;//not properly supported
 	}
 
-	public function file_exists($path){
+	public function file_exists($path) {
 		return file_exists($this->constructUrl($path));
 	}
 
-	public function unlink($path){
-		$succes=unlink($this->constructUrl($path));
+	public function unlink($path) {
+		$success = unlink($this->constructUrl($path));
 		clearstatcache();
-		return $succes;
+		return $success;
 	}
 
-	public function fopen($path,$mode){
-		return fopen($this->constructUrl($path),$mode);
+	public function fopen($path, $mode) {
+		return fopen($this->constructUrl($path), $mode);
 	}
 
-	public function free_space($path){
-		return 0;
-	}
-
-	public function touch($path,$mtime=null){
-		if(is_null($mtime)){
-			$fh=$this->fopen($path,'a');
-			fwrite($fh,'');
+	public function touch($path, $mtime=null) {
+		if(is_null($mtime)) {
+			$fh = $this->fopen($path, 'a');
+			fwrite($fh, '');
 			fclose($fh);
-		}else{
+
+			return true;
+		} else {
 			return false;//not supported
 		}
 	}
 
-	public function getFile($path,$target){
-		return copy($this->constructUrl($path),$target);
+	public function getFile($path, $target) {
+		return copy($this->constructUrl($path), $target);
 	}
 
-	public function uploadFile($path,$target){
-		return copy($path,$this->constructUrl($target));
+	public function uploadFile($path, $target) {
+		return copy($path, $this->constructUrl($target));
 	}
 
-	public function rename($path1,$path2){
-		return rename($this->constructUrl($path1),$this->constructUrl($path2));
+	public function rename($path1, $path2) {
+		return rename($this->constructUrl($path1), $this->constructUrl($path2));
 	}
 
-	public function stat($path){
+	public function stat($path) {
 		return stat($this->constructUrl($path));
 	}
-
-
 
 }
